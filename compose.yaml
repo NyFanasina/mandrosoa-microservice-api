@@ -1,0 +1,36 @@
+services:
+  user-service:
+    build: ./services/user
+    ports:
+      - 8000:8000
+    depends_on:
+      db:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/user_service
+    volumes:
+      - ./services/user:/code
+    networks:
+      - mandrosoa
+  db:
+    image: postgres:18.4-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - mandrosoa
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: user_service
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+
+
+networks:
+  mandrosoa:
+    driver: bridge
+
+volumes:
+  postgres_data:
