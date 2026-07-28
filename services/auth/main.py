@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from pydantic_core import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from .app.core.constants import ENV  # noqa: F401
 from .app.core.database import init_database
 from .app.core.exceptions import BaseHttpException
 from .app.router import router

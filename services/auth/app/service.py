@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from os import getenv
 from typing import Final
 
 import jwt
@@ -7,6 +6,7 @@ from fastapi import Response
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.exc import IntegrityError
 
+from .core.constants import ENV
 from .core.exceptions import AlreadyExistsException, UnAuthorizedException
 from .model import Credential, CredentialCreate, Token
 from .repository import AuthRepository
@@ -15,8 +15,6 @@ from .utils import format_response, hash_password, verify_password
 
 class AuthService:
     ALGORITHM: Final = "HS256"
-    EXPIRE_IN: Final = int(getenv("TOKEN_EXPIRE_IN") or 60)  # in seconds
-    SECRET_KEY: Final = getenv("SECRET_KEY") or ""
 
     def __init__(self, repository: AuthRepository):
         self.repository = repository
@@ -33,15 +31,19 @@ class AuthService:
     def login(self, credential: CredentialCreate, response: Response):
         token = self.authenticate(credential)
         response.set_cookie(
-            key="access_token",
+            key=ENV["COOKIE_NAME"],
             value=token.access_token,
             httponly=True,
             secure=True,
             samesite="lax",
-            max_age=AuthService.EXPIRE_IN,
+            max_age=ENV["TOKEN_EXPIRE_IN"],
         )
 
         return format_response(200, None, "Connection successful")
+
+    def logout(self, response: Response):
+        response.delete_cookie(ENV["COOKIE_NAME"])
+        return format_response(200, None, "Disconnection successful")
 
     def authenticate(self, credential: CredentialCreate) -> Token:
         db_credentials = self.repository.findByEmail(credential)
@@ -63,7 +65,7 @@ class AuthService:
 
     def decode_access_token(self, token: str):
         try:
-            decoded = jwt.decode(token, AuthService.SECRET_KEY, algorithms=[AuthService.ALGORITHM])
+            decoded = jwt.decode(token, ENV["SECRET_KEY"], algorithms=[AuthService.ALGORITHM])
             return format_response(200, decoded, "Token decoded")
         except ExpiredSignatureError:
             raise UnAuthorizedException("Token expired")
@@ -73,7 +75,7 @@ class AuthService:
     def __create_access_token(self, credential: Credential):
         to_encode = credential.model_dump(exclude={"id_user", "password_hash"})
         to_encode["id_user"] = str(credential.id_user)
-        expire_in = datetime.now(tz=timezone.utc) + timedelta(seconds=AuthService.EXPIRE_IN)
+        expire_in = datetime.now(tz=timezone.utc) + timedelta(seconds=ENV["TOKEN_EXPIRE_IN"])
         to_encode.update({"exp": expire_in})
 
-        return jwt.encode(to_encode, AuthService.SECRET_KEY, algorithm=AuthService.ALGORITHM)
+        return jwt.encode(to_encode, ENV["SECRET_KEY"], algorithm=AuthService.ALGORITHM)

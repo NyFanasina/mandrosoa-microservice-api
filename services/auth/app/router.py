@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, Response
 
+from .core.constants import ENV
 from .core.dependencies import get_auth_service
 from .model import CredentialCreate
 from .service import AuthService
@@ -27,9 +28,15 @@ def register(credential: CredentialCreate, auth_service: auth_service_deps):
 
 @router.get("/me")
 def get_currrent_user(
-    auth_service: auth_service_deps, access_token: Annotated[str, Cookie(include_in_schema=False)] = ""
+    auth_service: auth_service_deps,
+    access_token: Annotated[str, Cookie(alias=ENV["COOKIE_NAME"], include_in_schema=False)] = "",
 ):
     return auth_service.decode_access_token(access_token)
+
+
+@router.delete("/logout")
+def logout(auth_service: auth_service_deps, response: Response):
+    return auth_service.logout(response)
 
 
 # This part use OAuth2PasswordBearer (not used beacause we switch for cookie based auth)
