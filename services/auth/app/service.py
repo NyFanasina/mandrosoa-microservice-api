@@ -6,7 +6,7 @@ from fastapi import Response
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.exc import IntegrityError
 
-from .core.constants import ENV
+from .core.constant import ENV
 from .core.exceptions import AlreadyExistsException, UnAuthorizedException
 from .model import Credential, CredentialCreate, Token
 from .repository import AuthRepository

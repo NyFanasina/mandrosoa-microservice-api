@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, Response
 
-from .core.constants import ENV
+from .core.constant import ENV
 from .core.dependencies import get_auth_service
 from .model import CredentialCreate
 from .service import AuthService

@@ -1,14 +1,10 @@
-from os import getenv
-
-from dotenv import load_dotenv
 from sqlmodel import Session, SQLModel, create_engine
 
 from .. import model  # noqa: F401
 from ..utils import logger
+from .constant import ENV
 
-load_dotenv()
-
-database_url = getenv("DATABASE_URL") or ""
+database_url = ENV["DATABASE_URL"]
 engine = create_engine(database_url)
 
 
@@ -17,8 +13,8 @@ def init_database():
         # SQLModel.metadata.drop_all(engine)
         SQLModel.metadata.create_all(engine)
         logger.info("Connection to the database has been established !")
-    except Exception as e:
-        raise e.with_traceback(None)
+    except Exception:
+        raise
 
 
 def get_session():
