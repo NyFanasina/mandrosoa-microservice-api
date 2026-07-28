@@ -3,6 +3,7 @@ from os import getenv
 from typing import Final
 
 import jwt
+from fastapi import Response
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.exc import IntegrityError
 
@@ -13,9 +14,9 @@ from .utils import format_response, hash_password, verify_password
 
 
 class AuthService:
-    ALGORITHM: Final[str] = "HS256"
-    EXPIRE_IN: Final[float] = float(getenv("TOKEN_EXPIRE_IN") or 5)  # in minutes
-    SECRET_KEY: Final[str] = getenv("SECRET_KEY") or ""
+    ALGORITHM: Final = "HS256"
+    EXPIRE_IN: Final = int(getenv("TOKEN_EXPIRE_IN") or 60)  # in seconds
+    SECRET_KEY: Final = getenv("SECRET_KEY") or ""
 
     def __init__(self, repository: AuthRepository):
         self.repository = repository
@@ -29,7 +30,20 @@ class AuthService:
         except IntegrityError:
             raise AlreadyExistsException("Email already exists in the database")
 
-    def authenticate(self, credential: CredentialCreate):
+    def login(self, credential: CredentialCreate, response: Response):
+        token = self.authenticate(credential)
+        response.set_cookie(
+            key="access_token",
+            value=token.access_token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=AuthService.EXPIRE_IN,
+        )
+
+        return format_response(200, None, "Connection successful")
+
+    def authenticate(self, credential: CredentialCreate) -> Token:
         db_credentials = self.repository.findByEmail(credential)
 
         try:
@@ -42,7 +56,6 @@ class AuthService:
                 raise UnAuthorizedException("Invalid email or password")
 
             access_token = self.__create_access_token(db_credentials)
-
         except InvalidTokenError:
             raise UnAuthorizedException("Invalid token")
 
@@ -54,11 +67,13 @@ class AuthService:
             return format_response(200, decoded, "Token decoded")
         except ExpiredSignatureError:
             raise UnAuthorizedException("Token expired")
+        except jwt.DecodeError:
+            raise UnAuthorizedException("Invalid token")
 
     def __create_access_token(self, credential: Credential):
         to_encode = credential.model_dump(exclude={"id_user", "password_hash"})
         to_encode["id_user"] = str(credential.id_user)
-        expire_in = datetime.now(tz=timezone.utc) + timedelta(minutes=AuthService.EXPIRE_IN)
+        expire_in = datetime.now(tz=timezone.utc) + timedelta(seconds=AuthService.EXPIRE_IN)
         to_encode.update({"exp": expire_in})
 
         return jwt.encode(to_encode, AuthService.SECRET_KEY, algorithm=AuthService.ALGORITHM)
