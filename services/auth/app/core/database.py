@@ -1,5 +1,3 @@
-from sys import exit
-
 from sqlmodel import Session, SQLModel, create_engine
 
 from .. import model  # noqa: F401
@@ -16,9 +14,7 @@ def init_database():
         SQLModel.metadata.create_all(engine)
         logger.info("Connection to the database has been established !")
     except Exception as e:
-        print("------------ // DATABASE ERROR // -----------")
-        logger.error(e)
-        exit(1)
+        raise e
 
 
 def get_session():

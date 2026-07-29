@@ -1,23 +1,56 @@
+# for development purpose only
 services:
-  user-service:
+  auth_service:
+    build: ./services/auth
+    ports:
+      - 8001:8001
+    depends_on:
+      auth_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@auth_db:5432/auth_service
+      SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
+    volumes:
+      - ./services/auth:/code
+    networks:
+      - mandrosoa
+  auth_db:
+    image: postgres:18.4-alpine
+    ports:
+      - 5001:5432
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql
+    networks:
+      - mandrosoa
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_service
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  user_service:
     build: ./services/user
     ports:
-      - 8000:8000
+      - 8002:8002
     depends_on:
-      db:
-        condition: service_started
+      user_db:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/user_service
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@user_db:5432/user_service
     volumes:
       - ./services/user:/code
     networks:
       - mandrosoa
-  db:
+  user_db:
     image: postgres:18.4-alpine
     ports:
-      - 5432:5432
+      - 5002:5432
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_user_data:/var/lib/postgresql
     networks:
       - mandrosoa
     environment:
@@ -26,11 +59,14 @@ services:
       POSTGRES_DB: user_service
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   mandrosoa:
     driver: bridge
 
 volumes:
-  postgres_data:
+  postgres_auth_data:
+  postgres_user_data:

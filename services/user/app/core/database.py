@@ -13,8 +13,8 @@ def init_database():
         # SQLModel.metadata.drop_all(engine)
         SQLModel.metadata.create_all(engine)
         logger.info("Connection to the database has been established !")
-    except Exception:
-        raise
+    except Exception as e:
+        raise e
 
 
 def get_session():
