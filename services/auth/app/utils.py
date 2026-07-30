@@ -8,7 +8,11 @@ password_hasher = PasswordHash.recommended()
 
 
 def format_response(code: int = 200, data: Any = None, message=""):
-    return {"code": code, "data": data, "message": message}
+    return {
+        "code": code,
+        "data": data,
+        "message": message,
+    }
 
 
 def hash_password(password: str):
