@@ -1,0 +1,57 @@
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic_core import ValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from .app.core.constant import ENV  # noqa: F401
+from .app.core.exceptions import BaseHttpException
+from .app.router import router
+
+app = FastAPI()
+app.include_router(router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: BaseHttpException | HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": exc.status_code,
+            "data": None,
+            "message": exc.message if isinstance(exc, BaseHttpException) else exc.detail,
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def custom_request_validation_exception_handler(request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "code": 422,
+            "data": None,
+            "message": [f"{err['loc'][-1]} {err['msg']}" for err in exc.errors()],
+        },
+    )
+
+
+@app.exception_handler(ValidationError)
+async def custom_validation_exception_handler(request, exc: ValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "code": 400,
+            "data": None,
+            "message": [f"{err['loc'][-1]} {err['msg']}" for err in exc.errors()],
+        },
+    )

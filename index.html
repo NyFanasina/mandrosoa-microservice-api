@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CLIENT TEST</title>
+  </head>
+  <body>
+    <h1>CLIENT TEST</h1>
+    <button id="sign-in">SIGN IN</button>
+    <button id="whoami">WHO AM I</button>
+    <div id="app"></div>
+  </body>
+
+  <script>
+    const app = document.getElementById("app");
+    const signIn = document.getElementById("sign-in");
+    const whoAmI = document.getElementById("whoami");
+
+    signIn.addEventListener("click", () => {
+      fetch("http://localhost:8000/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          email: "user@example.com",
+          password: "string",
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data);
+        });
+    });
+
+    whoAmI.addEventListener("click", () => {
+      fetch("http://localhost:8000/api/auth/me", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          app.innerHTML = JSON.stringify(data);
+        });
+    });
+  </script>
+</html>
