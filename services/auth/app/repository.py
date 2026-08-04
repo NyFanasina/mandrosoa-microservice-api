@@ -18,12 +18,16 @@ class AuthRepository:
         self.session.refresh(user)
         return user
 
-    def findByEmail(self, email: str):
+    def find_by_email(self, email: str):
         stm = select(User).where(User.email == email)
         return self.session.exec(stm).one_or_none()
 
-    def findById(self, user_id: str):
+    def find_by_id(self, user_id: str):
         return self.session.get(User, user_id)
+
+    def find_by_token_verification(self, token: str):
+        stm = select(User).where(User.token_verification == token)
+        return self.session.exec(stm).one_or_none()
 
     def update(self, user: User):
         self.session.add(user)

@@ -15,4 +15,7 @@ ENV = {
     "SAMESITE": getenv("SAMESITE"),
     "TOKEN_EXPIRE_IN": int(getenv("TOKEN_EXPIRE_IN") or 30),
     "DATABASE_URL": getenv("DATABASE_URL"),
+    "BREVO_API_KEY": getenv("BREVO_API_KEY"),
+    "BREVO_SENDER_NAME": getenv("BREVO_SENDER_NAME"),
+    "BREVO_SENDER_EMAIL": getenv("BREVO_SENDER_EMAIL"),
 }

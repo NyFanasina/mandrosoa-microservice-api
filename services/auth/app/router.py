@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Response
+from fastapi import APIRouter, Cookie, Request, Response
 
 from .core.constant import ENV
 from .core.dependencies import UserServiceDeps
@@ -10,9 +10,9 @@ from .schemas import ApiResponse, Credential
 auth_router = APIRouter(prefix="/auth", tags=["Authentification"])
 
 
-@auth_router.post("")
-def register_user(user: UserCreate, service: UserServiceDeps):
-    return service.register(user)
+@auth_router.post("", response_model=ApiResponse[UserResponse])
+def register_user(user: UserCreate, service: UserServiceDeps, request: Request):
+    return service.register(user, str(request.base_url))
 
 
 @auth_router.post("/login")
@@ -24,12 +24,22 @@ def login(
     return service.login(credential, response)
 
 
+@auth_router.get("/resend-verification-email")
+def resend_verification_email(email: str, service: UserServiceDeps, request: Request):
+    return service.resend_verification_email(email, str(request.base_url))
+
+
+@auth_router.get("/verify-email", response_model=ApiResponse[UserResponse])
+def verify_email(token: str, service: UserServiceDeps):
+    return service.verify_email(token)
+
+
 @auth_router.get("/me")
 def get_currrent_user(
     auth_service: UserServiceDeps,
     access_token: Annotated[str, Cookie(alias=ENV["COOKIE_NAME"], include_in_schema=False)] = "",
 ):
-    return auth_service.decode_access_token(access_token)
+    return auth_service.who_am_i(access_token)
 
 
 @auth_router.delete("/logout")
@@ -46,8 +56,8 @@ def get_user_list(service: UserServiceDeps):
 
 
 @user_router.post("", response_model=ApiResponse[UserResponse])
-def create_user(user: UserCreate, auth_service: UserServiceDeps):
-    return auth_service.register(user)
+def create_user(user: UserCreate, auth_service: UserServiceDeps, request: Request):
+    return auth_service.register(user, str(request.base_url))
 
 
 @user_router.get("/{user_id}", response_model=ApiResponse[UserResponse])

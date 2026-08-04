@@ -24,6 +24,7 @@ class User(UserBase, table=True):
     id_user: UUID = Field(primary_key=True, default_factory=uuid4)
     password_hash: str
     is_verified: bool = False
+    token_verification: str | None = Field(nullable=True)
     created_at: datetime | None = Field(default=None, sa_column_kwargs={"server_default": func.now()})
     updated_at: datetime | None = Field(
         default=None, sa_column_kwargs={"server_default": func.now(), "onupdate": func.now()}

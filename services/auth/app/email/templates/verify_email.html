@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <body style="margin: auto; width: 600px; padding: 20px">
+    <h2>Bienvenue sur Mandrosoa {{ recipient_name }} !</h2>
+
+    <p>
+      Nous sommes ravis de vous compter parmi nos utilisateurs. Pour finaliser la création de votre compte et garantir
+      la sécurité de votre adresse email, veuillez confirmer votre adresse en cliquant sur le bouton ci-dessous :
+    </p>
+
+    <p style="text-align: center; margin: 40px 0">
+      <a
+        href="{{ verification_url }}"
+        style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px"
+      >
+        Confirmer mon email
+      </a>
+    </p>
+
+    <p>
+      Ce lien de confirmation est valable pendant 24 heures. Si vous n'avez pas créé de compte sur Mandrosoa, vous
+      pouvez ignorer cet email en toute sécurité.
+    </p>
+
+    <p>
+      Merci de votre confiance et bienvenue dans la communauté Mandrosoa. <br />
+      L'équipe Mandrosoa
+    </p>
+  </body>
+</html>
