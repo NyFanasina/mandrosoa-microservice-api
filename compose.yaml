@@ -6,6 +6,7 @@ services:
       - 8000:8000
     depends_on:
       - user_service
+      - listing_service
     environment:
       USER_SERVICE_URL: user_service:8001
       SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
@@ -44,6 +45,36 @@ services:
       interval: 7s
       timeout: 5s
       retries: 3
+  listing_service:
+    build: ./services/listing
+    ports:
+      - 8002:8002
+    depends_on:
+      listing_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@listing_db:5432/listing_service
+    volumes:
+      - ./services/listing:/code
+    networks:
+      - mandrosoa
+  listing_db:
+    image: postgres:18.4-alpine
+    ports:
+      - 5002:5432
+    volumes:
+      - postgres_listing_data:/var/lib/postgresql
+    networks:
+      - mandrosoa
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: listing_service
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 7s
+      timeout: 5s
+      retries: 3
 
 networks:
   mandrosoa:
@@ -51,3 +82,4 @@ networks:
 
 volumes:
   postgres_user_data:
+  postgres_listing_data:
