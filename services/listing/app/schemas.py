@@ -1,6 +1,7 @@
-from enum import StrEnum
-
 from pydantic import BaseModel
+
+from .models.listing import ListingWithoutPhoto
+from .models.photo import Photo
 
 
 class ApiResponse[T](BaseModel):
@@ -9,7 +10,5 @@ class ApiResponse[T](BaseModel):
     message: str
 
 
-class ListingStatus(StrEnum):
-    DRAFT = "draft"
-    PUBLISHED = "published"
-    ARCHIVED = "archived"
+class ListingResponse(ListingWithoutPhoto):
+    photos: list[Photo]

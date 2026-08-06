@@ -1,18 +1,21 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic_core import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .app.core.constant import ENV  # noqa: F401
 from .app.core.database import init_database
 from .app.core.exceptions import BaseHttpException
-from .app.router import router
+from .app.routers import listing_router, photo_router
 
 init_database()
 
 app = FastAPI()
-app.include_router(router)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.include_router(listing_router)
+app.include_router(photo_router)
 
 
 @app.exception_handler(StarletteHTTPException)

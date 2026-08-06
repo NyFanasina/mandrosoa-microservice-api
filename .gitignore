@@ -3,5 +3,7 @@
 **/__pycache__/
 .python-version
 
+**/static/
+
 .venv
 .env

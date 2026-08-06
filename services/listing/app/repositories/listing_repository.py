@@ -1,6 +1,8 @@
+from uuid import UUID
+
 from sqlmodel import Session, select
 
-from .models.listing import Listing
+from ..models.listing import Listing
 
 
 class ListingRepository:
@@ -18,7 +20,7 @@ class ListingRepository:
         self.session.refresh(listing)
         return listing
 
-    def find_by_id(self, listing_id: str):
+    def find_by_id(self, listing_id: UUID):
         return self.session.get(Listing, listing_id)
 
     def update(self, listing: Listing):

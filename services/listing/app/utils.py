@@ -6,3 +6,7 @@ logger = logging.getLogger("uvicorn")
 
 def format_response(code: int = 200, data: Any = None, message=""):
     return {"code": code, "data": data, "message": message}
+
+
+def generate_url(hostname: str, uri: str):
+    return f"{hostname}/{uri}"

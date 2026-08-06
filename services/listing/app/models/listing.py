@@ -1,37 +1,40 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 from sqlalchemy import func
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
-from ..schemas import ListingStatus
+from ..core.enums import ListingStatus
+
+if TYPE_CHECKING:
+    from ..models import Photo
 
 
 class ListingCreate(SQLModel):
-    host_id: UUID
+    id_host: UUID
     title: str
     description: str
     city: str
     address: str
-
     bedrooms: int | None = Field(default=None)
     max_guests: int | None = Field(default=None)
-
     base_price: Decimal = Field(default=0, max_digits=9, decimal_places=2)
-
     status: ListingStatus = Field(default=ListingStatus.DRAFT)
 
 
-class Listing(ListingCreate, table=True):
+class ListingWithoutPhoto(ListingCreate):
     id_listing: UUID = Field(primary_key=True, default_factory=uuid4)
 
     created_at: datetime | None = Field(default=None, sa_column_kwargs={"server_default": func.now()})
-    updated_at: datetime | None = Field(
-        default=None, sa_column_kwargs={"server_default": func.now(), "onupdate": func.now()}
-    )
+    updated_at: datetime | None = Field(default=None)
     published_at: datetime | None = Field(default=None)
+
+
+class Listing(ListingWithoutPhoto, table=True):
+    photos: list["Photo"] = Relationship(back_populates="listing", cascade_delete=True)
 
 
 class ListingUpdate(BaseModel):
