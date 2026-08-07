@@ -7,6 +7,7 @@ services:
     depends_on:
       - user_service
       - listing_service
+      - booking_service
     environment:
       USER_SERVICE_URL: user_service:8001
       SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
@@ -75,6 +76,36 @@ services:
       interval: 7s
       timeout: 5s
       retries: 3
+  booking_service:
+    build: ./services/booking
+    ports:
+      - 8003:8003
+    depends_on:
+      booking_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@booking_db:5432/booking_service
+    volumes:
+      - ./services/booking:/code
+    networks:
+      - mandrosoa
+  booking_db:
+    image: postgres:18.4-alpine
+    ports:
+      - 5003:5432
+    volumes:
+      - postgres_booking_data:/var/lib/postgresql
+    networks:
+      - mandrosoa
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: booking_service
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 7s
+      timeout: 5s
+      retries: 3
 
 networks:
   mandrosoa:
@@ -83,3 +114,4 @@ networks:
 volumes:
   postgres_user_data:
   postgres_listing_data:
+  postgres_booking_data:
