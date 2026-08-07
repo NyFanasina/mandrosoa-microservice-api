@@ -33,6 +33,11 @@ class ListingService:
 
         return format_response(200, db_listing, "Listing found")
 
+    def filter(self, hostname: str, term: str | None, city: str | None, address: str | None):
+        listings = self.repository.filter(term=term, city=city, address=address)
+        listings = self.__generate_url_for_photo(hostname, listings)
+        return format_response(data=listings, message="Listing matching term")
+
     def update(self, listing_id: UUID, listing: ListingUpdate):
         db_listing = self.repository.find_by_id(listing_id)
 
@@ -57,7 +62,9 @@ class ListingService:
 
         return format_response(200, None, "Listing deleted")
 
-    def __generate_url_for_photo(self, hostname: str, listings: Sequence[Listing] | Listing):
+    def __generate_url_for_photo(self, hostname: str, listings: Sequence[Listing] | Listing | None):
+        if listings is None:
+            return []
         next_listings = [listings] if isinstance(listings, Listing) else listings
 
         for listing in next_listings:

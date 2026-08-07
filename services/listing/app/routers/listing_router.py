@@ -19,6 +19,17 @@ def create_listing(listing: ListingCreate, service: ListingServiceDeps):
     return service.store(listing)
 
 
+@router.get("/filter", response_model=ApiResponse[list[ListingResponse]])
+def filter_listings(
+    service: ListingServiceDeps,
+    request: Request,
+    term: str | None = None,
+    city: str | None = None,
+    address: str | None = None,
+):
+    return service.filter(hostname=str(request.headers.get("host")), term=term, city=city, address=address)
+
+
 @router.get("/{listing_id}", response_model=ApiResponse[ListingResponse])
 def show_a_listing(listing_id: UUID, request: Request, service: ListingServiceDeps):
     return service.show(listing_id, str(request.headers.get("host")))
