@@ -15,7 +15,7 @@ services:
     networks:
       - mandrosoa
   user_service:
-    build: ./services/auth
+    build: ./services/user
     ports:
       - 8001:8001
     depends_on:
@@ -25,7 +25,7 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@user_db:5432/user_service
       SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
     volumes:
-      - ./services/auth:/code
+      - ./services/user:/code
     networks:
       - mandrosoa
   user_db:
