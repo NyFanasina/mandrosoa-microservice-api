@@ -5,3 +5,4 @@ test:
   stage: test
   script:
     - echo "CI du backend fonctionne"
+    - echo "test"
