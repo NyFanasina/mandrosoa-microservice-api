@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, or_, select
 
 from ..models.listing import Listing
 
@@ -22,6 +22,23 @@ class ListingRepository:
 
     def find_by_id(self, listing_id: UUID):
         return self.session.get(Listing, listing_id)
+
+    def filter(self, term: str | None = None, city: str | None = None, address: str | None = None):
+        term = term or ""
+        city = city or ""
+        address = address or ""
+
+        stm = select(Listing).where(
+            or_(
+                col(Listing.title).contains(term),
+                col(Listing.description).contains(term),
+                col(Listing.city).contains(term),
+                col(Listing.address).contains(term),
+                col(Listing.city).contains(city),
+                col(Listing.address).contains(address),
+            )
+        )
+        return self.session.exec(stm).all()
 
     def update(self, listing: Listing):
         self.session.add(listing)
