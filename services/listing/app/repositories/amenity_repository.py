@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlmodel import Session, select
 
 from ..models.amenity import Amenity
@@ -16,7 +18,7 @@ class AmenityRepository:
         self.session.refresh(amenity)
         return amenity
 
-    def find_by_id(self, id_amenity: str):
+    def find_by_id(self, id_amenity: UUID):
         return self.session.get(Amenity, id_amenity)
 
     def update(self, amenity: Amenity):
