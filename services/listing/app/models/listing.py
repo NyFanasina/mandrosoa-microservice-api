@@ -8,9 +8,10 @@ from sqlalchemy import func
 from sqlmodel import Field, Relationship, SQLModel
 
 from ..core.enums import ListingStatus
+from .amenity_listing_link import AmenityListingLink
 
 if TYPE_CHECKING:
-    from ..models import Photo
+    from ..models import Amenity, Photo
 
 
 class ListingCreate(SQLModel):
@@ -35,6 +36,7 @@ class ListingWithoutPhoto(ListingCreate):
 
 class Listing(ListingWithoutPhoto, table=True):
     photos: list["Photo"] = Relationship(back_populates="listing", cascade_delete=True)
+    amenities: list["Amenity"] = Relationship(back_populates="listings", link_model=AmenityListingLink)
 
 
 class ListingUpdate(BaseModel):
