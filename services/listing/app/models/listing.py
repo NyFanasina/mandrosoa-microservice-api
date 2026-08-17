@@ -8,12 +8,13 @@ from sqlalchemy import func
 from sqlmodel import Field, Relationship, SQLModel
 
 from ..core.enums import ListingStatus
+from .amenity_listing_link import AmenityListingLink
 
 if TYPE_CHECKING:
-    from ..models import Photo
+    from ..models import Amenity, Photo
 
 
-class ListingCreate(SQLModel):
+class ListingBase(SQLModel):
     id_host: UUID
     title: str
     description: str
@@ -25,7 +26,11 @@ class ListingCreate(SQLModel):
     status: ListingStatus = Field(default=ListingStatus.DRAFT)
 
 
-class ListingWithoutPhoto(ListingCreate):
+class ListingCreate(ListingBase):
+    amenity_ids: list[UUID] = []
+
+
+class ListingWithoutPhoto(ListingBase):
     id_listing: UUID = Field(primary_key=True, default_factory=uuid4)
 
     created_at: datetime | None = Field(default=None, sa_column_kwargs={"server_default": func.now()})
@@ -35,6 +40,7 @@ class ListingWithoutPhoto(ListingCreate):
 
 class Listing(ListingWithoutPhoto, table=True):
     photos: list["Photo"] = Relationship(back_populates="listing", cascade_delete=True)
+    amenities: list["Amenity"] = Relationship(back_populates="listings", link_model=AmenityListingLink)
 
 
 class ListingUpdate(BaseModel):

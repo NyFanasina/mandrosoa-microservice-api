@@ -4,27 +4,38 @@ from uuid import UUID
 
 from ..core.exceptions import NotFoundException
 from ..models.listing import Listing, ListingCreate, ListingUpdate
+from ..repositories.amenity_repository import AmenityRepository
 from ..repositories.listing_repository import ListingRepository
 from ..utils import format_response, generate_url
 
 
 class ListingService:
-    def __init__(self, repository: ListingRepository):
-        self.repository = repository
+    def __init__(self, repository: ListingRepository, amenity_repository: AmenityRepository):
+        self.listing_repository = repository
+        self.amenity_repository = amenity_repository
 
     def index(self, hostname: str):
-        listings = self.repository.all()
+        listings = self.listing_repository.all()
         listings = self.__generate_url_for_photo(hostname, listings)
 
         return format_response(data=listings, message="List of listings")
 
     def store(self, new_listing: ListingCreate):
         listing = Listing(**new_listing.model_dump())
-        db_listing = self.repository.create(listing)
+
+        for amenity_id in new_listing.amenity_ids:
+            amenity = self.amenity_repository.find_by_id(amenity_id)
+
+            if amenity is None:
+                raise NotFoundException("Amenity Not Found")
+
+            listing.amenities.append(amenity)
+
+        db_listing = self.listing_repository.create(listing)
         return format_response(201, db_listing, "Listing created")
 
     def show(self, listing_id: UUID, hostname: str):
-        db_listing = self.repository.find_by_id(listing_id)
+        db_listing = self.listing_repository.find_by_id(listing_id)
 
         if db_listing is None:
             raise NotFoundException("Listing Not Found")
@@ -34,12 +45,12 @@ class ListingService:
         return format_response(200, db_listing, "Listing found")
 
     def filter(self, hostname: str, term: str | None, city: str | None, address: str | None):
-        listings = self.repository.filter(term=term, city=city, address=address)
+        listings = self.listing_repository.filter(term=term, city=city, address=address)
         listings = self.__generate_url_for_photo(hostname, listings)
         return format_response(data=listings, message="Listing matching term")
 
     def update(self, listing_id: UUID, listing: ListingUpdate):
-        db_listing = self.repository.find_by_id(listing_id)
+        db_listing = self.listing_repository.find_by_id(listing_id)
 
         if db_listing is None:
             raise NotFoundException("Listing Not Found")
@@ -47,15 +58,15 @@ class ListingService:
         listing_data = listing.model_dump(exclude_unset=True)
         db_listing.sqlmodel_update(listing_data)
 
-        return format_response(200, self.repository.update(db_listing), "Listing updated")
+        return format_response(200, self.listing_repository.update(db_listing), "Listing updated")
 
     def destroy(self, listing_id: UUID):
-        db_listing = self.repository.find_by_id(listing_id)
+        db_listing = self.listing_repository.find_by_id(listing_id)
 
         if db_listing is None:
             raise NotFoundException("Listing Not Found")
 
-        self.repository.remove(db_listing)
+        self.listing_repository.remove(db_listing)
 
         for photo in db_listing.photos:
             os.remove(photo.uri)

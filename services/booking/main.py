@@ -1,22 +1,18 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic_core import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .app.core.constant import ENV  # noqa: F401
 from .app.core.database import init_database
 from .app.core.exceptions import BaseHttpException
-from .app.routers import amenity_router, listing_router, photo_router
+from .app.router import router
 
 init_database()
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.include_router(amenity_router)
-app.include_router(listing_router)
-app.include_router(photo_router)
+app.include_router(router)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -33,7 +29,6 @@ async def custom_http_exception_handler(request: Request, exc: BaseHttpException
 
 @app.exception_handler(RequestValidationError)
 async def custom_request_validation_exception_handler(request, exc: RequestValidationError):
-    print()
     return JSONResponse(
         status_code=422,
         content={
@@ -46,7 +41,6 @@ async def custom_request_validation_exception_handler(request, exc: RequestValid
 
 @app.exception_handler(ValidationError)
 async def custom_validation_exception_handler(request, exc: ValidationError):
-    print()
     return JSONResponse(
         status_code=400,
         content={
