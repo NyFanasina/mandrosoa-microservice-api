@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .app.core.constant import ENV  # noqa: F401
 from .app.core.database import init_database
 from .app.core.exceptions import BaseHttpException
-from .app.router import auth_router, user_router
+from .app.routers import auth_router, user_router
 
 init_database()
 
