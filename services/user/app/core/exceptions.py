@@ -23,3 +23,9 @@ class UnAuthorizedException(BaseHttpException):
     def __init__(self, message="Unauthorized"):
         self.status_code = status.HTTP_401_UNAUTHORIZED
         self.message = message
+
+
+class ForbiddenException(BaseHttpException):
+    def __init__(self, message="Forbidden"):
+        self.status_code = status.HTTP_403_FORBIDDEN
+        self.message = message

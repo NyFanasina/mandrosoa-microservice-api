@@ -1,11 +1,11 @@
-from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Cookie, Request, Response
+from fastapi import APIRouter, Request, Response
 
-from ..core.constant import ENV
 from ..core.dependencies import UserServiceDeps
 from ..model import UserCreate, UserResponse
 from ..schemas import ApiResponse, Credential
+from ..security import UserGuardDeps
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentification"])
 
@@ -34,16 +34,13 @@ def verify_email(token: str, service: UserServiceDeps):
     return service.verify_email(token)
 
 
-@auth_router.get("/me")
-def get_currrent_user(
-    auth_service: UserServiceDeps,
-    access_token: Annotated[str, Cookie(alias=ENV["COOKIE_NAME"], include_in_schema=False)] = "",
-):
-    return auth_service.who_am_i(access_token)
+@auth_router.get("/me", response_model=ApiResponse[UserResponse])
+def who_am_i(service: UserServiceDeps, curent_user: UserGuardDeps):
+    return service.who_am_i(UUID(curent_user.get("id_user")))
 
 
 @auth_router.delete("/logout")
-def logout(auth_service: UserServiceDeps, response: Response):
+def logout(auth_service: UserServiceDeps, response: Response, _: UserGuardDeps):
     return auth_service.logout(response)
 
 
