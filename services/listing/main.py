@@ -8,12 +8,13 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .app.core.constant import ENV  # noqa: F401
 from .app.core.database import init_database
 from .app.core.exceptions import BaseHttpException
-from .app.routers import listing_router, photo_router
+from .app.routers import amenity_router, listing_router, photo_router
 
 init_database()
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.include_router(amenity_router)
 app.include_router(listing_router)
 app.include_router(photo_router)
 

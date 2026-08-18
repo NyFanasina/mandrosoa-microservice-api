@@ -14,7 +14,7 @@ def get_listings(request: Request, service: ListingServiceDeps):
     return service.index(str(request.headers.get("host")))
 
 
-@router.post("")
+@router.post("", response_model=ApiResponse[ListingResponse])
 def create_listing(listing: ListingCreate, service: ListingServiceDeps):
     return service.store(listing)
 

@@ -7,13 +7,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .app.core.constant import ENV  # noqa: F401
 from .app.core.database import init_database
 from .app.core.exceptions import BaseHttpException
-from .app.routers import auth_router, user_router
+from .app.router import router
 
 init_database()
 
 app = FastAPI()
-app.include_router(auth_router)
-app.include_router(user_router)
+app.include_router(router)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -47,7 +46,6 @@ async def custom_validation_exception_handler(request, exc: ValidationError):
         content={
             "code": 400,
             "data": None,
-            "message": exc.errors(),
-            # "message": [f"{err['loc'][-1]} {err['msg']}" for err in exc.errors()],
+            "message": [f"{err['loc'][-1]} {err['msg']}" for err in exc.errors()],
         },
     )

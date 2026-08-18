@@ -8,7 +8,8 @@ if not loaded:
     raise Exception("Please create a .env file")
 
 ENV = {
-    "SECRET_KEY": getenv("SECRET_KEY"),
+    "SECRET_KEY": getenv("JWT_SECRET_KEY"),
+    "JWT_ALGORITHM": getenv("JWT_ALGORITHM", "HS256"),
     "COOKIE_NAME": str(getenv("COOKIE_NAME")),
     "HTTPONLY": getenv("HTTPONLY", "false").lower() == "true",
     "SECURE": getenv("SECURE", "false").lower() == "true",

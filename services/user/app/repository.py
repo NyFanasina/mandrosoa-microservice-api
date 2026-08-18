@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlmodel import Session, select
 
 from .model import User
@@ -22,7 +24,7 @@ class AuthRepository:
         stm = select(User).where(User.email == email)
         return self.session.exec(stm).one_or_none()
 
-    def find_by_id(self, user_id: str):
+    def find_by_id(self, user_id: UUID):
         return self.session.get(User, user_id)
 
     def find_by_token_verification(self, token: str):

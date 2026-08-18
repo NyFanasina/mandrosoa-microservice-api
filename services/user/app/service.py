@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Final
+from uuid import UUID
 
 import jwt
 from brevo import Brevo
@@ -10,7 +11,7 @@ from brevo.transactional_emails import (
 )
 from fastapi import Response
 from jinja2 import Environment, FileSystemLoader
-from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy.exc import IntegrityError
 
 from .core.constant import ENV
@@ -18,6 +19,7 @@ from .core.exceptions import AlreadyExistsException, NotFoundException, UnAuthor
 from .model import User, UserCreate, UserUpdate
 from .repository import AuthRepository
 from .schemas import Credential, Token, TokenPayload
+from .security import create_access_token, decode_access_token
 from .utils import format_response, hash_password, verify_password
 
 
@@ -49,7 +51,7 @@ class UserService:
         except IntegrityError:
             raise AlreadyExistsException("Email already exists in the database")
 
-    def show(self, user_id: str):
+    def show(self, user_id: UUID):
         user = self.repository.find_by_id(user_id)
 
         if user is None:
@@ -57,7 +59,7 @@ class UserService:
 
         return format_response(data=user, message="User found")
 
-    def update(self, user_id: str, user: UserUpdate):
+    def update(self, user_id: UUID, user: UserUpdate):
         db_user = self.repository.find_by_id(user_id)
 
         if db_user is None:
@@ -68,7 +70,7 @@ class UserService:
         data = self.repository.update(db_user)
         return format_response(200, data, "User Updated")
 
-    def destroy(self, user_id: str):
+    def destroy(self, user_id: UUID):
         user = self.repository.find_by_id(user_id)
 
         if user is None:
@@ -107,7 +109,7 @@ class UserService:
                 raise UnAuthorizedException("Invalid email or password")
 
             token_payload = TokenPayload(id_user=str(db_user.id_user), role=db_user.role)
-            access_token = self.__create_access_token(token_payload)
+            access_token = create_access_token(token_payload)
         except InvalidTokenError:
             raise UnAuthorizedException("Invalid token")
 
@@ -115,7 +117,7 @@ class UserService:
 
     def verify_email(self, token: str):
         try:
-            self.__decode_access_token(token)
+            decode_access_token(token)
             user = self.repository.find_by_token_verification(token)
 
             if user is None:
@@ -128,23 +130,9 @@ class UserService:
         except jwt.DecodeError:
             raise UnAuthorizedException("Invalid token")
 
-    def who_am_i(self, token: str):
-        decoded = self.__decode_access_token(token)
-        return format_response(200, decoded, "Token decoded")
-
-    def __decode_access_token(self, token: str):
-        try:
-            return jwt.decode(token, ENV["SECRET_KEY"], algorithms=[UserService.ALGORITHM])
-        except ExpiredSignatureError:
-            raise UnAuthorizedException("Token expired")
-        except jwt.DecodeError:
-            raise UnAuthorizedException("Invalid token")
-
-    def __create_access_token(self, payload: TokenPayload, exp: int | None = None):
-        payload.expires_in = datetime.now(tz=timezone.utc) + timedelta(
-            seconds=exp or ENV["TOKEN_EXPIRE_IN"]
-        )
-        return jwt.encode(payload, ENV["SECRET_KEY"], algorithm=UserService.ALGORITHM)
+    def who_am_i(self, id_user: UUID):
+        user = self.repository.find_by_id(id_user)
+        return format_response(200, user, "Token decoded")
 
     def __generate_token_verification(self, user: UserCreate | User):
         payload = {

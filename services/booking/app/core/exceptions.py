@@ -1,10 +1,17 @@
-from fastapi import HTTPException, status
+from fastapi import status
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
-class BaseHttpException(HTTPException):
+class BaseHttpException(StarletteHTTPException):
     def __init__(self, code: int = 500, message="Internal Server Error"):
         self.message = message
         self.status_code = code
+
+
+class InvalidInputException(BaseHttpException):
+    def __init__(self, message="Invalid input"):
+        self.status_code = status.HTTP_400_BAD_REQUEST
+        self.message = message
 
 
 class NotFoundException(BaseHttpException):
@@ -16,16 +23,4 @@ class NotFoundException(BaseHttpException):
 class AlreadyExistsException(BaseHttpException):
     def __init__(self, message="Resource already exists"):
         self.status_code = status.HTTP_409_CONFLICT
-        self.message = message
-
-
-class UnAuthorizedException(BaseHttpException):
-    def __init__(self, message="Unauthorized"):
-        self.status_code = status.HTTP_401_UNAUTHORIZED
-        self.message = message
-
-
-class ForbiddenException(BaseHttpException):
-    def __init__(self, message="Forbidden"):
-        self.status_code = status.HTTP_403_FORBIDDEN
         self.message = message
