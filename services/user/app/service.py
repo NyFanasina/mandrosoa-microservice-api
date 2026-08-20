@@ -111,6 +111,9 @@ class UserService:
             if db_user is None:
                 raise UnAuthorizedException("Invalid email or password")
 
+            if not db_user.is_verified:
+                raise UnAuthorizedException("Email not yet verified")
+
             matched = verify_password(credential.password, db_user.password_hash)
 
             if not matched:
