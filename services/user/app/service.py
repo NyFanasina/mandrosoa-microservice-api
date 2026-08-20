@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta, timezone
-from typing import Final
+import random
 from uuid import UUID
 
 import jwt
@@ -18,14 +17,18 @@ from .core.constant import ENV
 from .core.exceptions import AlreadyExistsException, NotFoundException, UnAuthorizedException
 from .model import User, UserCreate, UserUpdate
 from .repository import AuthRepository
-from .schemas import Credential, Token, TokenPayload
-from .security import create_access_token, decode_access_token
+from .schemas import Credential, PasswordForgottenUpdate, Token, TokenPayload
+from .security import (
+    create_access_token,
+    decode_access_token,
+    decode_reset_code_token,
+    generate_password_reset_token,
+    generate_token_verification,
+)
 from .utils import format_response, hash_password, verify_password
 
 
 class UserService:
-    ALGORITHM: Final = "HS256"
-
     def __init__(self, repository: AuthRepository):
         self.repository = repository
 
@@ -35,7 +38,7 @@ class UserService:
     def register(self, user: UserCreate, base_url: str):
         try:
             password_hash = hash_password(user.password)
-            token_verification = self.__generate_token_verification(user)
+            token_verification = generate_token_verification(user)
 
             user_with_hash = User(
                 **user.model_dump(exclude={"password"}),
@@ -46,7 +49,12 @@ class UserService:
             verification_url = f"{base_url.rstrip('/')}/auth/verify-email?token={token_verification}"
 
             created = self.repository.create(user_with_hash).model_dump(exclude={"password_hash"})
-            self.__send_email_verification(user, verification_url)
+            self.__send_email(
+                user,
+                subject="Confirmez votre adresse email - Bienvenue sur Mandrosoa",
+                template_name="verify_email",
+                verification_url=verification_url,
+            )
             return format_response(201, created, "User registered")
         except IntegrityError:
             raise AlreadyExistsException("Email already exists in the database")
@@ -103,6 +111,9 @@ class UserService:
             if db_user is None:
                 raise UnAuthorizedException("Invalid email or password")
 
+            if not db_user.is_verified:
+                raise UnAuthorizedException("Email not yet verified")
+
             matched = verify_password(credential.password, db_user.password_hash)
 
             if not matched:
@@ -134,38 +145,87 @@ class UserService:
         user = self.repository.find_by_id(id_user)
         return format_response(200, user, "Token decoded")
 
-    def __generate_token_verification(self, user: UserCreate | User):
-        payload = {
-            "role": user.role,
-            "expires_in": str(datetime.now(tz=timezone.utc) + timedelta(seconds=3600)),
-        }
-        return jwt.encode(payload, ENV["SECRET_KEY"], algorithm=UserService.ALGORITHM)
-
     def resend_verification_email(self, email: str, base_url: str):
         db_user = self.repository.find_by_email(email)
 
         if db_user is None:
             raise NotFoundException("User Not Found")
 
-        token_verification = self.__generate_token_verification(db_user)
+        token_payload = TokenPayload(id_user=str(db_user.id_user), role=db_user.role)
+        token_verification = create_access_token(token_payload, 3600)
         verification_url = f"{base_url.rstrip('/')}/auth/verify-email?token={token_verification}"
 
         db_user.token_verification = token_verification
         self.repository.update(db_user)
-        self.__send_email_verification(db_user, verification_url)
+        self.__send_email(
+            db_user,
+            subject="Confirmez votre adresse email - Bienvenue sur Mandrosoa",
+            template_name="verify_email",
+            verification_url=verification_url,
+        )
         return format_response(200, None, "Email resent")
 
-    def __send_email_verification(self, user: UserCreate | User, verification_url: str):
+    def update_password(self, pwd_reset_data: PasswordForgottenUpdate):
+        decoded = decode_reset_code_token(pwd_reset_data.reset_password_token)
+
+        db_user = self.repository.find_by_id(decoded.get("id_user"))
+
+        if not db_user:
+            raise NotFoundException("User Not Found")
+
+        if db_user.password_reset_token != pwd_reset_data.reset_password_token:
+            raise UnAuthorizedException("Invalid token")
+
+        db_user.password_hash = hash_password(pwd_reset_data.new_password)
+        self.repository.update(db_user)
+
+        return format_response(200, None, "Password updated successfully")
+
+    def get_reset_code_by_email(self, email: str):
+        db_user = self.repository.find_by_email(email)
+
+        if not db_user:
+            raise NotFoundException("User Not Found")
+
+        reset_code = random.randint(100000, 999999)
+        password_reset_token = generate_password_reset_token(db_user.id_user, reset_code)
+        db_user.password_reset_token = password_reset_token
+
+        self.repository.update(db_user)
+        self.__send_email(
+            db_user,
+            subject="Réinitialisation du mot de passe - Mandrosoa",
+            template_name="reset_password",
+            reset_code=reset_code,
+        )
+        return format_response(200, None, "Email sent for password reset")
+
+    def check_reset_code(self, email: str, reset_code: int):
+        db_user = self.repository.find_by_email(email)
+
+        if not db_user:
+            raise NotFoundException("User Not Found")
+
+        decoded = decode_reset_code_token(str(db_user.password_reset_token))
+
+        if reset_code != decoded.get("reset_code"):
+            raise UnAuthorizedException("Reset code invalid")
+
+        data = {"reset_code_token": db_user.password_reset_token}
+
+        return format_response(200, data, "Reset code valid")
+
+    def __send_email(self, user: UserCreate | User, subject: str, template_name: str, **kwargs):
         full_name = f"{user.first_name} {user.last_name}"
-        client = Brevo(api_key=ENV["BREVO_API_KEY"])
 
         env = Environment(loader=FileSystemLoader("app/email/templates"))
-        template = env.get_template("verify_email.html")
+        template = env.get_template(f"{template_name}.html")
 
         try:
+            client = Brevo(api_key=ENV["BREVO_API_KEY"])
             result = client.transactional_emails.send_transac_email(
-                subject="Confirmez votre adresse email - Bienvenue sur Mandrosoa",
-                html_content=template.render(recipient_name=full_name, verification_url=verification_url),
+                subject=subject,
+                html_content=template.render(recipient_name=full_name, **kwargs),
                 sender=SendTransacEmailRequestSender(
                     name=ENV["BREVO_SENDER_NAME"],
                     email=ENV["BREVO_SENDER_EMAIL"],
