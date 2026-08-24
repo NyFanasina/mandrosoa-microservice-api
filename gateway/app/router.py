@@ -14,21 +14,23 @@ def hello():
 @router.api_route("{pathname:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def user(pathname: str, client: ClientHttpDeps, request: Request, response: Response):
     try:
+        headers = request.headers.mutablecopy()
+        headers.__delitem__("host")
+
         service = guess_service_url(pathname)
         url = f"{service}{pathname}"
-
         body = await request.body()
         result = await client.request(
             method=request.method,
             url=url,
-            headers=request.headers,
+            headers=headers,
             content=body,
             params=request.query_params,
         )
         json = result.json()
 
         response.status_code = result.status_code
-        print(result.headers.get_list("set-cookie"))
+        # print(result.headers.get_list("set-cookie"))
 
         for cookie_string in result.headers.get_list("set-cookie"):
             response.headers.append("set-cookie", cookie_string)
