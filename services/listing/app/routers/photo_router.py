@@ -5,7 +5,7 @@ from fastapi import APIRouter, Form, Request, UploadFile
 
 from ..core.dependencies import PhotoServiceDeps
 
-router = APIRouter(prefix="/photos", tags=["PHOTO"])
+router = APIRouter(prefix="/listings/photos", tags=["PHOTO"])
 
 
 @router.post("")
@@ -15,7 +15,8 @@ def save_a_photo(
     request: Request,
     photo_service: PhotoServiceDeps,
 ):
-    return photo_service.store(id_listing, upload, hostname=str(request.headers.get("host")))
+    hostname = str(request.headers.get("host")).rstrip("/")
+    return photo_service.store(id_listing, upload, hostname=hostname)
 
 
 @router.delete("/{id_photo}")
