@@ -10,6 +10,7 @@ services:
       - booking_service
     environment:
       USER_SERVICE_URL: user_service:8001
+      LISTING_SERVICE_URL: listing_service:8002
       SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
     volumes:
       - ./gateway:/code

@@ -14,8 +14,8 @@ init_database()
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.include_router(listing_router)
 app.include_router(amenity_router)
+app.include_router(listing_router)
 app.include_router(photo_router)
 
 
