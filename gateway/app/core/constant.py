@@ -9,10 +9,12 @@ if not loaded:
 
 ENV = {
     "USER_SERVICE_URL": str(getenv("USER_SERVICE_URL")),
+    "LISTING_SERVICE_URL": str(getenv("LISTING_SERVICE_URL")),
 }
 
 
 routing_table = {
     "/users": ENV["USER_SERVICE_URL"],
     "/auth": ENV["USER_SERVICE_URL"],
+    "/listing": ENV["LISTING_SERVICE_URL"],
 }

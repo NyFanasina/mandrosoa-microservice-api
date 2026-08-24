@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Response
 
 from .core.dependencies import ClientHttpDeps
-from .utils import guess_service_url
+from .utils import format_response, guess_service_url
 
 router = APIRouter(prefix="/api", tags=["Gateway API"])
 
@@ -13,23 +13,28 @@ def hello():
 
 @router.api_route("{pathname:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def user(pathname: str, client: ClientHttpDeps, request: Request, response: Response):
-    service = guess_service_url(pathname)
-    url = f"{service}{pathname}"
+    try:
+        service = guess_service_url(pathname)
+        url = f"{service}{pathname}"
 
-    body = await request.body()
-    result = await client.request(
-        method=request.method,
-        url=url,
-        headers=request.headers,
-        content=body,
-        params=request.query_params,
-    )
-    json = result.json()
+        body = await request.body()
+        result = await client.request(
+            method=request.method,
+            url=url,
+            headers=request.headers,
+            content=body,
+            params=request.query_params,
+        )
+        json = result.json()
 
-    response.status_code = result.status_code
-    print(result.headers.get_list("set-cookie"))
+        response.status_code = result.status_code
+        print(result.headers.get_list("set-cookie"))
 
-    for cookie_string in result.headers.get_list("set-cookie"):
-        response.headers.append("set-cookie", cookie_string)
+        for cookie_string in result.headers.get_list("set-cookie"):
+            response.headers.append("set-cookie", cookie_string)
 
-    return json
+        return json
+    except Exception as e:
+        print(e)
+        response.status_code = 500
+        return format_response(code=500, message="Internal Server Error")

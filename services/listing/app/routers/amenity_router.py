@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from ..core.dependencies import AmenityServiceDeps
 from ..models.amenity import AmenityCreate, AmenityUpdate
 
-router = APIRouter(prefix="/amenities", tags=["AMENITY"])
+router = APIRouter(prefix="/listings/amenities", tags=["AMENITY"])
 
 
 @router.get("")
