@@ -16,7 +16,7 @@ def save_a_photo(
     photo_service: PhotoServiceDeps,
     _: HostGuardDeps,
 ):
-    hostname = str(request.headers.get("host")).rstrip("/")
+    hostname = str(request.base_url).rstrip("/")
     return photo_service.store(id_listing, upload, hostname=hostname)
 
 

@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from fastapi import APIRouter, Request, Response
 from pydantic import EmailStr
 
@@ -52,7 +50,7 @@ def verify_email(token: str, service: UserServiceDeps):
 
 @auth_router.get("/me", response_model=ApiResponse[UserResponse])
 def who_am_i(service: UserServiceDeps, curent_user: UserGuardDeps):
-    return service.who_am_i(UUID(curent_user.get("id_user")))
+    return service.who_am_i(curent_user.get("id_user"))
 
 
 @auth_router.delete("/logout")
