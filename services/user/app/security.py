@@ -10,15 +10,15 @@ from jwt.exceptions import ExpiredSignatureError
 from .core.constant import ENV
 from .core.exceptions import ForbiddenException, UnAuthorizedException
 from .model import User, UserCreate
-from .schemas import ResetCode, TokenPayload
+from .schemas import ResetCode, TokenData, TokenPayload
 
 ALGORITHM = ENV["JWT_ALGORITHM"]
 JWT_SECRET_KEY = ENV["JWT_SECRET_KEY"]
 
 
-def decode_access_token(token: str):
+def decode_access_token(token: str) -> TokenData:
     try:
-        return jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        return cast(TokenData, jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM]))
     except ExpiredSignatureError:
         raise UnAuthorizedException("Token expired")
     except jwt.DecodeError:
@@ -64,12 +64,12 @@ def get_currrent_user(access_token: Annotated[str, Depends(cookie_scheme)]):
     return decode_access_token(access_token)
 
 
-def get_admin_user(current_user: Annotated[dict, Depends(get_currrent_user)]):
+def get_admin_user(current_user: Annotated[TokenData, Depends(get_currrent_user)]):
     if current_user.get("role") != "admin":
         raise ForbiddenException("Only admin can access this route")
 
     return current_user
 
 
-AdminGuardDeps = Annotated[dict, Depends(get_admin_user)]
-UserGuardDeps = Annotated[dict, Depends(get_currrent_user)]
+AdminGuardDeps = Annotated[TokenData, Depends(get_admin_user)]
+UserGuardDeps = Annotated[TokenData, Depends(get_currrent_user)]

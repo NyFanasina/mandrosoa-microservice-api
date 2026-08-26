@@ -17,7 +17,7 @@ from .core.constant import ENV
 from .core.exceptions import AlreadyExistsException, NotFoundException, UnAuthorizedException
 from .model import User, UserCreate, UserUpdate
 from .repository import AuthRepository
-from .schemas import Credential, PasswordForgottenUpdate, Token, TokenPayload
+from .schemas import Credential, PasswordForgottenUpdate, TokenPayload
 from .security import (
     create_access_token,
     decode_access_token,
@@ -88,14 +88,14 @@ class UserService:
         return format_response(message="User Deleted")
 
     def login(self, credential: Credential, response: Response):
-        token = self.authenticate(credential)
+        access_token = self.authenticate(credential)
         response.set_cookie(
             key=ENV["COOKIE_NAME"],
             httponly=ENV["HTTPONLY"],
             secure=ENV["SECURE"],
             samesite=ENV["SAMESITE"],
             max_age=ENV["TOKEN_EXPIRE_IN"],
-            value=token.access_token,
+            value=access_token,
         )
 
         return format_response(200, None, "Connection successful")
@@ -104,7 +104,7 @@ class UserService:
         response.delete_cookie(ENV["COOKIE_NAME"])
         return format_response(200, None, "Disconnection successful")
 
-    def authenticate(self, credential: Credential) -> Token:
+    def authenticate(self, credential: Credential):
         db_user = self.repository.find_by_email(credential.email)
 
         try:
@@ -120,11 +120,9 @@ class UserService:
                 raise UnAuthorizedException("Invalid email or password")
 
             token_payload = TokenPayload(id_user=str(db_user.id_user), role=db_user.role)
-            access_token = create_access_token(token_payload)
+            return create_access_token(token_payload)
         except InvalidTokenError:
             raise UnAuthorizedException("Invalid token")
-
-        return Token(access_token=access_token, token_type="Bearer")
 
     def verify_email(self, token: str):
         try:

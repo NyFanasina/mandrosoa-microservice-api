@@ -18,9 +18,9 @@ class Role(StrEnum):
     ADMIN = "admin"
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class TokenData(TypedDict):
+    id_user: UUID
+    role: Role
 
 
 class TokenPayload(dict):
