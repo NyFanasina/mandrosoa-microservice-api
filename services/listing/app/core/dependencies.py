@@ -48,7 +48,6 @@ auth_scheme = APIKeyHeader(name="X-User")
 
 
 def get_current_user(current_user_str: Annotated[str, Depends(auth_scheme)]):
-    print(current_user_str)
     current_user = DecodedToken.model_validate_json(current_user_str)
     if not current_user:
         raise UnAuthorizedException("Not authenticated")

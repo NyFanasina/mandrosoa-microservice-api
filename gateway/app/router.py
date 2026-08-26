@@ -24,7 +24,6 @@ async def user(pathname: str, client: ClientHttpDeps, request: Request, response
         if decoded_token:
             decoded_json = decoded_token.model_dump_json()
             headers.setdefault("X-User", decoded_json)
-            print(decoded_json)
 
         service = guess_service_url(pathname)
         url = f"{service}{pathname}"
