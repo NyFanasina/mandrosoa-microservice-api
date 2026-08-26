@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, Response
 
+from .core.constant import ENV
 from .core.dependencies import ClientHttpDeps
-from .utils import format_response, guess_service_url
+from .utils import decode_access_token, format_response, guess_service_url
 
 router = APIRouter(prefix="/api", tags=["Gateway API"])
 
@@ -17,9 +18,18 @@ async def user(pathname: str, client: ClientHttpDeps, request: Request, response
         headers = request.headers.mutablecopy()
         headers.__delitem__("host")
 
+        decoded_token = decode_access_token(request.cookies.get(ENV["COOKIE_NAME"]) or "")
+        # b64_bytes = base64.b64encode(json_str.encode("utf-8"))
+
+        if decoded_token:
+            decoded_json = decoded_token.model_dump_json()
+            headers.setdefault("X-User", decoded_json)
+            print(decoded_json)
+
         service = guess_service_url(pathname)
         url = f"{service}{pathname}"
         body = await request.body()
+
         result = await client.request(
             method=request.method,
             url=url,
@@ -27,15 +37,13 @@ async def user(pathname: str, client: ClientHttpDeps, request: Request, response
             content=body,
             params=request.query_params,
         )
-        json = result.json()
 
         response.status_code = result.status_code
-        # print(result.headers.get_list("set-cookie"))
 
         for cookie_string in result.headers.get_list("set-cookie"):
             response.headers.append("set-cookie", cookie_string)
 
-        return json
+        return result.json()
     except Exception as e:
         print(e)
         response.status_code = 500
