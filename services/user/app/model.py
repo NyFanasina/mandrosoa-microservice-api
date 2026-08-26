@@ -44,6 +44,9 @@ class UserResponse(UserBase):
 class UserUpdate(SQLModel):
     first_name: str | None = None
     last_name: str | None = None
-    role: Role | None = None
     phone_number: str | None = None
+
+
+class UserAdminUpdate(UserUpdate):
+    role: Role | None = None
     is_verified: bool | None = None
