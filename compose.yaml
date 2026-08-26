@@ -10,7 +10,6 @@ services:
     environment:
       USER_SERVICE_URL: user_service:8001
       LISTING_SERVICE_URL: listing_service:8002
-      SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
     networks:
       - mandrosoa
   user_service:
@@ -22,7 +21,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@user_db:5432/user_service
-      SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
     networks:
       - mandrosoa
   user_db:

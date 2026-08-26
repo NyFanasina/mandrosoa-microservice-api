@@ -1,0 +1,9 @@
+services:
+  gateway:
+    image: registry.gitlab.com/immobiliers/mandrosoa-backend/gateway:v26-08-2026
+  user_service:
+    image: registry.gitlab.com/immobiliers/mandrosoa-backend/user_service:v26-08-2026
+  listing_service:
+    image: registry.gitlab.com/immobiliers/mandrosoa-backend/listing_service:v26-08-2026
+  booking_service:
+    image: registry.gitlab.com/immobiliers/mandrosoa-backend/booking_service:v26-08-2026
