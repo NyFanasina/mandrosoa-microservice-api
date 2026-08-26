@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 
 class ListingBase(SQLModel):
-    id_host: UUID
     title: str
     description: str
     city: str
@@ -26,13 +25,17 @@ class ListingBase(SQLModel):
     status: ListingStatus = Field(default=ListingStatus.DRAFT)
 
 
-class ListingCreate(ListingBase):
+class ListingInputCreate(ListingBase):  # Schema for swagger
     amenity_ids: list[UUID] = []
+
+
+class ListingCreate(ListingInputCreate):
+    id_host: UUID
 
 
 class ListingWithoutPhoto(ListingBase):
     id_listing: UUID = Field(primary_key=True, default_factory=uuid4)
-
+    id_host: UUID
     created_at: datetime | None = Field(default=None, sa_column_kwargs={"server_default": func.now()})
     updated_at: datetime | None = Field(default=None)
     published_at: datetime | None = Field(default=None)

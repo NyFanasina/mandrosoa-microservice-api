@@ -2,9 +2,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Request
 
-from ..core.dependencies import ListingServiceDeps
+from ..core.dependencies import HostGuardDeps, ListingServiceDeps
 from ..core.enums import ListingStatus
-from ..models.listing import ListingCreate, ListingUpdate
+from ..models.listing import ListingCreate, ListingInputCreate, ListingUpdate
 from ..schemas import ApiResponse, ListingResponse
 
 router = APIRouter(prefix="/listings", tags=["LISTING"])
@@ -17,8 +17,9 @@ def get_listings(request: Request, service: ListingServiceDeps):
 
 
 @router.post("", response_model=ApiResponse[ListingResponse])
-def create_listing(listing: ListingCreate, service: ListingServiceDeps):
-    return service.store(listing)
+def create_listing(listing: ListingInputCreate, service: ListingServiceDeps, current_user: HostGuardDeps):
+    listing_with_id_host = ListingCreate(**listing.model_dump(), id_host=current_user.id_user)
+    return service.store(listing_with_id_host)
 
 
 @router.get("/filter", response_model=ApiResponse[list[ListingResponse]])
@@ -41,10 +42,12 @@ def show_a_listing(listing_id: UUID, request: Request, service: ListingServiceDe
 
 
 @router.put("/{listing_id}")
-def update_a_listing(listing_id: UUID, listing: ListingUpdate, service: ListingServiceDeps):
+def update_a_listing(
+    listing_id: UUID, listing: ListingUpdate, service: ListingServiceDeps, _: HostGuardDeps
+):
     return service.update(listing_id, listing)
 
 
 @router.delete("/{listing_id}")
-def delete_a_listing(listing_id: UUID, service: ListingServiceDeps):
+def delete_a_listing(listing_id: UUID, service: ListingServiceDeps, _: HostGuardDeps):
     return service.destroy(listing_id)

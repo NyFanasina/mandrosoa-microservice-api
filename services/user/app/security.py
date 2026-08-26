@@ -13,7 +13,7 @@ from .model import User, UserCreate
 from .schemas import ResetCode, TokenPayload
 
 ALGORITHM = ENV["JWT_ALGORITHM"]
-JWT_SECRET_KEY = ENV["SECRET_KEY"]
+JWT_SECRET_KEY = ENV["JWT_SECRET_KEY"]
 
 
 def decode_access_token(token: str):
