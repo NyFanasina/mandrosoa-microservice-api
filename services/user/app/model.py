@@ -25,6 +25,7 @@ class User(UserBase, table=True):
     password_hash: str
     is_verified: bool = False
     token_verification: str | None = Field(nullable=True)
+    password_reset_token: str | None = Field(nullable=True)
     created_at: datetime | None = Field(default=None, sa_column_kwargs={"server_default": func.now()})
     updated_at: datetime | None = Field(
         default=None, sa_column_kwargs={"server_default": func.now(), "onupdate": func.now()}
@@ -43,6 +44,9 @@ class UserResponse(UserBase):
 class UserUpdate(SQLModel):
     first_name: str | None = None
     last_name: str | None = None
-    role: Role | None = None
     phone_number: str | None = None
+
+
+class UserAdminUpdate(UserUpdate):
+    role: Role | None = None
     is_verified: bool | None = None

@@ -3,7 +3,9 @@
 **/__pycache__/
 .python-version
 
-**/static/
+**/static/**/*
 
 .venv
 .env
+
+!**/.gitkeep

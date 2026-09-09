@@ -1,11 +1,10 @@
-from typing import Annotated
+from fastapi import APIRouter, Request, Response
+from pydantic import EmailStr
 
-from fastapi import APIRouter, Cookie, Request, Response
-
-from .core.constant import ENV
-from .core.dependencies import UserServiceDeps
-from .model import UserCreate, UserResponse, UserUpdate
-from .schemas import ApiResponse, Credential
+from ..core.dependencies import UserServiceDeps
+from ..model import UserCreate, UserResponse
+from ..schemas import ApiResponse, Credential, PasswordForgottenUpdate
+from ..security import UserGuardDeps
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentification"])
 
@@ -24,8 +23,23 @@ def login(
     return service.login(credential, response)
 
 
+@auth_router.post("/forgotten-password")
+def ask_reset_password_code(email: EmailStr, service: UserServiceDeps):
+    return service.get_reset_code_by_email(email)
+
+
+@auth_router.patch("/forgotten-password")
+def update_password(password_reset_data: PasswordForgottenUpdate, service: UserServiceDeps):
+    return service.update_password(password_reset_data)
+
+
+@auth_router.get("/forgotten-password/check")
+def get_password_reset_token(email: EmailStr, code: int, service: UserServiceDeps):
+    return service.check_reset_code(email, code)
+
+
 @auth_router.get("/resend-verification-email")
-def resend_verification_email(email: str, service: UserServiceDeps, request: Request):
+def resend_verification_email(email: EmailStr, service: UserServiceDeps, request: Request):
     return service.resend_verification_email(email, str(request.base_url))
 
 
@@ -34,45 +48,14 @@ def verify_email(token: str, service: UserServiceDeps):
     return service.verify_email(token)
 
 
-@auth_router.get("/me")
-def get_currrent_user(
-    auth_service: UserServiceDeps,
-    access_token: Annotated[str, Cookie(alias=ENV["COOKIE_NAME"], include_in_schema=False)] = "",
-):
-    return auth_service.who_am_i(access_token)
+@auth_router.get("/me", response_model=ApiResponse[UserResponse])
+def who_am_i(service: UserServiceDeps, curent_user: UserGuardDeps):
+    return service.who_am_i(curent_user.get("id_user"))
 
 
 @auth_router.delete("/logout")
-def logout(auth_service: UserServiceDeps, response: Response):
+def logout(auth_service: UserServiceDeps, response: Response, _: UserGuardDeps):
     return auth_service.logout(response)
-
-
-user_router = APIRouter(prefix="/users", tags=["User"])
-
-
-@user_router.get("", response_model=ApiResponse[list[UserResponse]])
-def get_user_list(service: UserServiceDeps):
-    return service.index()
-
-
-@user_router.post("", response_model=ApiResponse[UserResponse])
-def create_user(user: UserCreate, auth_service: UserServiceDeps, request: Request):
-    return auth_service.register(user, str(request.base_url))
-
-
-@user_router.get("/{user_id}", response_model=ApiResponse[UserResponse])
-def find_user_by_id(user_id: str, service: UserServiceDeps):
-    return service.show(user_id)
-
-
-@user_router.put("/{user_id}", response_model=ApiResponse[UserResponse])
-def update_user(user_id: str, user_data: UserUpdate, service: UserServiceDeps):
-    return service.update(user_id, user_data)
-
-
-@user_router.delete("/{user_id}")
-def delete_user(user_id: str, service: UserServiceDeps):
-    return service.destroy(user_id)
 
 
 # This part use OAuth2PasswordBearer (not used beacause we switch for cookie based auth)

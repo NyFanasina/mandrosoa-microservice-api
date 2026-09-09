@@ -2,6 +2,7 @@ import os
 from collections.abc import Sequence
 from uuid import UUID
 
+from ..core.enums import ListingStatus
 from ..core.exceptions import NotFoundException
 from ..models.listing import Listing, ListingCreate, ListingUpdate
 from ..repositories.amenity_repository import AmenityRepository
@@ -44,8 +45,15 @@ class ListingService:
 
         return format_response(200, db_listing, "Listing found")
 
-    def filter(self, hostname: str, term: str | None, city: str | None, address: str | None):
-        listings = self.listing_repository.filter(term=term, city=city, address=address)
+    def filter(
+        self,
+        hostname: str,
+        status: ListingStatus | None,
+        term: str | None,
+        city: str | None,
+        address: str | None,
+    ):
+        listings = self.listing_repository.filter(status=status, term=term, city=city, address=address)
         listings = self.__generate_url_for_photo(hostname, listings)
         return format_response(data=listings, message="Listing matching term")
 

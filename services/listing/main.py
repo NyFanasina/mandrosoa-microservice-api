@@ -33,7 +33,6 @@ async def custom_http_exception_handler(request: Request, exc: BaseHttpException
 
 @app.exception_handler(RequestValidationError)
 async def custom_request_validation_exception_handler(request, exc: RequestValidationError):
-    print()
     return JSONResponse(
         status_code=422,
         content={
@@ -46,7 +45,6 @@ async def custom_request_validation_exception_handler(request, exc: RequestValid
 
 @app.exception_handler(ValidationError)
 async def custom_validation_exception_handler(request, exc: ValidationError):
-    print()
     return JSONResponse(
         status_code=400,
         content={

@@ -48,5 +48,4 @@ class BookingRepository:
                 ),
             )
         )
-        print(self.session.exec(stm).first())
         return not self.session.exec(stm).first()

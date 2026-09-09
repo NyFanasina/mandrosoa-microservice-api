@@ -1,4 +1,3 @@
-# for development purpose only
 services:
   gateway:
     build: ./gateway
@@ -10,9 +9,7 @@ services:
       - booking_service
     environment:
       USER_SERVICE_URL: user_service:8001
-      SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
-    volumes:
-      - ./gateway:/code
+      LISTING_SERVICE_URL: listing_service:8002
     networks:
       - mandrosoa
   user_service:
@@ -24,9 +21,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@user_db:5432/user_service
-      SECRET_KEY: 7e828f55eb59635be7c8c3bc80156c8f
-    volumes:
-      - ./services/user:/code
     networks:
       - mandrosoa
   user_db:
@@ -55,8 +49,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@listing_db:5432/listing_service
-    volumes:
-      - ./services/listing:/code
     networks:
       - mandrosoa
   listing_db:
@@ -85,8 +77,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@booking_db:5432/booking_service
-    volumes:
-      - ./services/booking:/code
     networks:
       - mandrosoa
   booking_db:

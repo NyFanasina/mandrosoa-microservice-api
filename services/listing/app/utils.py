@@ -10,3 +10,7 @@ def format_response(code: int = 200, data: Any = None, message=""):
 
 def generate_url(hostname: str, uri: str):
     return f"{hostname}/{uri}"
+
+
+def unit_test_demo():
+    return True

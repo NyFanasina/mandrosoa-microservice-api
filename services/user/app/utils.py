@@ -21,3 +21,7 @@ def hash_password(password: str):
 
 def verify_password(password: str, hashed_password: str):
     return password_hasher.verify(password, hashed_password)
+
+
+def unit_test_demo():
+    return True

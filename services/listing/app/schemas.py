@@ -1,3 +1,6 @@
+from enum import StrEnum
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from .models.amenity import Amenity
@@ -14,3 +17,14 @@ class ApiResponse[T](BaseModel):
 class ListingResponse(ListingWithoutPhoto):
     photos: list[Photo]
     amenities: list[Amenity]
+
+
+class Role(StrEnum):
+    TRAVELER = "traveler"
+    HOST = "host"
+    ADMIN = "admin"
+
+
+class DecodedToken(BaseModel):
+    id_user: UUID
+    role: Role

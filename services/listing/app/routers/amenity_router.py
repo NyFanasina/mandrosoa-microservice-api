@@ -2,10 +2,10 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from ..core.dependencies import AmenityServiceDeps
+from ..core.dependencies import AdminGuardDeps, AmenityServiceDeps
 from ..models.amenity import AmenityCreate, AmenityUpdate
 
-router = APIRouter(prefix="/amenities", tags=["AMENITY"])
+router = APIRouter(prefix="/listings/amenities", tags=["AMENITY"])
 
 
 @router.get("")
@@ -14,7 +14,7 @@ def get_amenities(service: AmenityServiceDeps):
 
 
 @router.post("")
-def create_amenity(amenity: AmenityCreate, service: AmenityServiceDeps):
+def create_amenity(amenity: AmenityCreate, service: AmenityServiceDeps, _: AdminGuardDeps):
     return service.store(amenity)
 
 
@@ -24,10 +24,12 @@ def show_amenity(id_amenity: UUID, service: AmenityServiceDeps):
 
 
 @router.put("/{id_amenity}")
-def update_amenity(id_amenity: UUID, amenity: AmenityUpdate, service: AmenityServiceDeps):
+def update_amenity(
+    id_amenity: UUID, service: AmenityServiceDeps, amenity: AmenityUpdate, _: AdminGuardDeps
+):
     return service.update(id_amenity, amenity)
 
 
 @router.delete("/{id_amenity}")
-def destroy_amenity(id_amenity: UUID, service: AmenityServiceDeps):
+def destroy_amenity(id_amenity: UUID, service: AmenityServiceDeps, _: AdminGuardDeps):
     return service.destroy(id_amenity)
